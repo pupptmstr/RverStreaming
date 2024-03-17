@@ -77,7 +77,15 @@ func TranscodeAndSegmentFile(fileData FileData, file *multipart.FileHeader) erro
 
 	tempFilePath := tempFile.Name()
 	manifestFilePath := outputDirName + "/manifest.mpd"
-	cmd := exec.Command("ffmpeg", "-i", tempFilePath, "-map", "0", "-f", "dash", manifestFilePath)
+	cmd := exec.Command(
+		"ffmpeg",
+		"-i", tempFilePath,
+		"-map", "0:v", "-map", "0:a",
+		"-b:v:0", "1500k", "-filter:v:0", "scale=-1:720",
+		"-b:v:1", "600k", "-filter:v:1", "scale=-1:360",
+		"-var_stream_map", "v:0,a:0 v:1,a:1",
+		"-f", "dash", manifestFilePath,
+	)
 	var stderr bytes.Buffer
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
